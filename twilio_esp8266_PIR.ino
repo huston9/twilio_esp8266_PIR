@@ -12,46 +12,33 @@
 #define USE_SOFTWARE_SERIAL 0
 
 // Print debug messages over serial?
-#define USE_SERIAL 1
+#define USE_SERIAL 0
 
-// Your network SSID and password
-const char* ssid = "The_Sailboat";
-const char* password = "club848!";
+#define timeSeconds 60
 
-// Find the api.twilio.com SHA1 fingerprint, this one was valid as 
-// of July 2020. This will change, please see 
-// https://www.twilio.com/docs/sms/tutorials/how-to-send-sms-messages-esp8266-cpp
-// to see how to update the fingerprint.
-const char fingerprint[] = "BC B0 1A 32 80 5D E6 E4 A2 29 66 2B 08 C8 E0 4C 45 29 3F D0";
+// from PIRtest.ino
+const int motionSensor = D2;
+unsigned long now = millis();
+unsigned long lastTrigger = 0;
+boolean startTimer = false;
 
-// Twilio account specific details, from https://twilio.com/console
-// Please see the article: 
-// https://www.twilio.com/docs/guides/receive-and-reply-sms-and-mms-messages-esp8266-c-and-ngrok
+// from twilio_esp8266_arduino_example.ino
+const char* ssid = "SBTM";
+const char* password = "0nlyB1gPoop3r5";
 
-// If this device is deployed in the field you should only deploy a revocable
-// key. This code is only suitable for prototyping or if you retain physical
-// control of the installation.
-const char* account_sid = "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
-const char* auth_token = "Your AUTH TOKEN";
-
-// Details for the SMS we'll send with Twilio.  Should be a number you own 
-// (check the console, link above).
-String to_number    = "+18005551212";
-String from_number = "+18005551212";
-String message_body    = "Hello from Twilio and the ESP8266!";
-
-// The 'authorized number' to text the ESP8266 for our example
-String master_number    = "+18005551212";
-
-// Optional - a url to an image.  See 'MediaUrl' here: 
-// https://www.twilio.com/docs/api/rest/sending-messages
+const char fingerprint[] = "72 1C 17 31 85 E2 7E 0D F9 D4 C2 5B A0 0E BD B7 E2 06 26 ED";
+const char* account_sid = "ACc76d8535d59198c9ab05aa5718f3b011";
+const char* auth_token = "6d4f4047fe1202cb6db8067114c6ddb6";
+String to_number    = "+18477671525";
+String from_number = "+12242423024";
+String master_number    = "+12242423024";
 String media_url = "";
 
-// Global twilio objects
+boolean sendMessage = false;
+
 Twilio *twilio;
 ESP8266WebServer twilio_server(8000);
 
-//  Optional software serial debugging
 #if USE_SOFTWARE_SERIAL == 1
 #include <SoftwareSerial.h>
 // You'll need to set pin numbers to match your setup if you
@@ -61,11 +48,16 @@ extern SoftwareSerial swSer(14, 4, false, 256);
 #define swSer Serial
 #endif
 
-/*
- * Callback function when we hit the /message route with a webhook.
- * Use the global 'twilio_server' object to respond.
- */
- void handle_message() {
+IRAM_ATTR void detectsMovement() {
+  Serial.println("MOTION!!!!!!");
+  if (not startTimer) {
+    sendMessage = true;
+  }
+  startTimer = true;
+  lastTrigger = millis();
+}
+
+void handle_message() {
         #if USE_SERIAL == 1
         swSer.println("Incoming connection!  Printing body:");
         #endif
@@ -135,57 +127,67 @@ extern SoftwareSerial swSer(14, 4, false, 256);
         twilio_server.send(200, "application/xml", response);
 }
 
-/*
- * Setup function for ESP8266 Twilio Example.
- * 
- * Here we connect to a friendly wireless network, set the time, instantiate 
- * our twilio object, optionally set up software serial, then send a SMS 
- * or MMS message.
- */
 void setup() {
-        WiFi.begin(ssid, password);
-        twilio = new Twilio(account_sid, auth_token, fingerprint);
+  // serial port for debugging purposes:
+  Serial.begin(115200);
 
-        #if USE_SERIAL == 1
-        swSer.begin(115200);
-        while (WiFi.status() != WL_CONNECTED) {
-                delay(1000);
-                swSer.print(".");
-        }
-        swSer.println("");
-        swSer.println("Connected to WiFi, IP address: ");
-        swSer.println(WiFi.localIP());
-        #else
-        while (WiFi.status() != WL_CONNECTED) delay(1000);
-        #endif
+//  PIR motionSensor mode INPUT_PULLUP
+  pinMode(motionSensor, INPUT_PULLUP);
+//  set motionSensor pin as interrupt, assign interrupt fxn and set RISING mode
+  attachInterrupt(digitalPinToInterrupt(motionSensor), detectsMovement, RISING);
+  Serial.println("hello!");
 
-        // Response will be filled with connection info and Twilio API responses
-        // from this initial SMS send.
-        String response;
-        bool success = twilio->send_message(
-                to_number,
-                from_number,
-                message_body,
-                response,
-                media_url
-        );
+  WiFi.begin(ssid, password);
+  twilio = new Twilio(account_sid, auth_token, fingerprint);
 
-        // Set up a route to /message which will be the webhook url
-        twilio_server.on("/message", handle_message);
-        twilio_server.begin();
+  #if USE_SERIAL == 1
+    swSer.begin(115200);
+    while (WiFi.status() != WL_CONNECTED) {
+            delay(1000);
+            swSer.print(".");
+    }
+    swSer.println("");
+    swSer.println("Connected to WiFi, IP address: ");
+    swSer.println(WiFi.localIP());
+    #else
+    while (WiFi.status() != WL_CONNECTED) delay(1000);
+  #endif
 
-        // Use LED_BUILTIN to find the LED pin and set the GPIO to output
-        pinMode(LED_BUILTIN, OUTPUT);
+  String response;
+  String setup_message_body = "PIR sensor is fully setup";
+  bool success = twilio->send_message(
+          to_number,
+          from_number,
+          setup_message_body,
+          response,
+          media_url
+  );
 
-        #if USE_SERIAL == 1
-        swSer.println(response);
-        #endif
+  twilio_server.on("/message", handle_message);
+  twilio_server.begin();
+
+  #if USE_SERIAL == 1
+    swSer.println(response);
+  #endif
 }
 
-
-/* 
- *  In our main loop, we listen for connections from Twilio in handleClient().
- */
 void loop() {
-        twilio_server.handleClient();
+  if(sendMessage) {
+      String response;
+      String message_body = "Motion detected by PIR sensor";
+      bool success = twilio->send_message(
+        to_number,
+        from_number,
+        message_body,
+        response,
+        media_url
+      );
+      sendMessage = false;
+  }
+  now = millis();
+  if(startTimer && (now - lastTrigger > (timeSeconds*1000))) {
+    Serial.println("Motion stopped...");
+    startTimer = false;
+  }
+  twilio_server.handleClient();
 }
