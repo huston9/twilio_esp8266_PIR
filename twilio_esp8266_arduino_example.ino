@@ -15,14 +15,15 @@
 #define USE_SERIAL 1
 
 // Your network SSID and password
-const char* ssid = "The_Sailboat";
-const char* password = "club848!";
+const char* ssid = "SBTM";
+const char* password = "0nlyB1gPoop3r5";
 
 // Find the api.twilio.com SHA1 fingerprint, this one was valid as 
 // of July 2020. This will change, please see 
 // https://www.twilio.com/docs/sms/tutorials/how-to-send-sms-messages-esp8266-cpp
 // to see how to update the fingerprint.
-const char fingerprint[] = "BC B0 1A 32 80 5D E6 E4 A2 29 66 2B 08 C8 E0 4C 45 29 3F D0";
+//const char fingerprint[] = "BC B0 1A 32 80 5D E6 E4 A2 29 66 2B 08 C8 E0 4C 45 29 3F D0";
+const char fingerprint[] = "72 1C 17 31 85 E2 7E 0D F9 D4 C2 5B A0 0E BD B7 E2 06 26 ED";
 
 // Twilio account specific details, from https://twilio.com/console
 // Please see the article: 
@@ -31,17 +32,17 @@ const char fingerprint[] = "BC B0 1A 32 80 5D E6 E4 A2 29 66 2B 08 C8 E0 4C 45 2
 // If this device is deployed in the field you should only deploy a revocable
 // key. This code is only suitable for prototyping or if you retain physical
 // control of the installation.
-const char* account_sid = "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
-const char* auth_token = "Your AUTH TOKEN";
+const char* account_sid = "ACc76d8535d59198c9ab05aa5718f3b011";
+const char* auth_token = "6d4f4047fe1202cb6db8067114c6ddb6";
 
 // Details for the SMS we'll send with Twilio.  Should be a number you own 
 // (check the console, link above).
-String to_number    = "+18005551212";
-String from_number = "+18005551212";
+String to_number    = "+18477671525";
+String from_number = "+12242423024";
 String message_body    = "Hello from Twilio and the ESP8266!";
 
 // The 'authorized number' to text the ESP8266 for our example
-String master_number    = "+18005551212";
+String master_number    = "+12242423024";
 
 // Optional - a url to an image.  See 'MediaUrl' here: 
 // https://www.twilio.com/docs/api/rest/sending-messages
