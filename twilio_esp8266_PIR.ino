@@ -72,7 +72,7 @@ void handle_message() {
                 swSer.println(twilio_server.arg(i));
                 #endif
 
-                if (twilio_server.argName(i) == "From" and 
+                if (twilio_server.argName(i) == "From" and
                     twilio_server.arg(i) == master_number) {
                     authorized = true;
                 } else if (twilio_server.argName(i) == "Body") {
@@ -110,7 +110,7 @@ void handle_message() {
                                 "The light is currently: ";
                                 response += digitalRead(LED_BUILTIN);
                                 response += "</Message></Response>";
-                                break;               
+                                break;
                         }
                 } else {
                         response += "<Response><Message>"
